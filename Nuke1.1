@@ -1,0 +1,227 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Player = Players.LocalPlayer
+
+-- // SETTINGS //
+local KEY = "NUKE-2025"
+local TOGGLE_KEY = Enum.KeyCode.RightControl
+
+-------------------------------------------------------------------------
+-- 1. GLOBAL MOVABLE LOGIC (Works on all frames)
+-------------------------------------------------------------------------
+local function ApplyDrag(gui)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = gui.Position
+        end
+    end)
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+end
+
+-------------------------------------------------------------------------
+-- 2. UI CREATION (Professional Dark Theme)
+-------------------------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "NukePro"
+ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+-- MAIN FRAME
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 350, 0, 380)
+Main.Position = UDim2.new(0.5, -175, 0.5, -190)
+Main.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
+Main.Visible = false
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Color = Color3.fromRGB(0, 255, 150) -- Nuclear Green Accent
+Stroke.Thickness = 1.5
+ApplyDrag(Main)
+
+-- HEADER
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 35)
+Header.BackgroundColor3 = Color3.fromRGB(25, 25, 28)
+Header.Parent = Main
+local hC = Instance.new("UICorner", Header)
+
+local Title = Instance.new("TextLabel")
+Title.Text = "  NUKE BUILD & BATTLE [PRO]"
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.TextSize = 13
+Title.Parent = Header
+
+-- MINI BUTTON (-)
+local MinBtn = Instance.new("TextButton")
+MinBtn.Text = "-"
+MinBtn.Size = UDim2.new(0, 25, 0, 25)
+MinBtn.Position = UDim2.new(1, -30, 0.5, -12)
+MinBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.Parent = Header
+Instance.new("UICorner", MinBtn)
+MinBtn.MouseButton1Click:Connect(function() Main.Visible = false end)
+
+-- SCROLLING CONTAINER
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -10, 1, -45)
+Scroll.Position = UDim2.new(0, 5, 0, 40)
+Scroll.BackgroundTransparency = 1
+Scroll.ScrollBarThickness = 2
+Scroll.Parent = Main
+local Layout = Instance.new("UIGridLayout", Scroll)
+Layout.CellSize = UDim2.new(1, -10, 0, 40)
+Layout.CellPadding = UDim2.new(0, 5, 0, 5)
+
+-------------------------------------------------------------------------
+-- 3. UTILITY FUNCTIONS
+-------------------------------------------------------------------------
+local function CreateToggle(txt, callback)
+    local b = Instance.new("TextButton")
+    b.Text = txt
+    b.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    b.TextColor3 = Color3.fromRGB(200, 200, 200)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 13
+    b.Parent = Scroll
+    Instance.new("UICorner", b)
+    
+    local enabled = false
+    b.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        b.BackgroundColor3 = enabled and Color3.fromRGB(0, 150, 100) or Color3.fromRGB(30, 30, 35)
+        callback(enabled)
+    end)
+end
+
+-- SPEED
+CreateToggle("Super Speed (Run to Base)", function(state)
+    Player.Character.Humanoid.WalkSpeed = state and 50 or 16
+end)
+
+-- INFINITE JUMP
+local infJumpConnection
+CreateToggle("Infinite Jump (Build High)", function(state)
+    if state then
+        infJumpConnection = UserInputService.JumpRequest:Connect(function()
+            Player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+        end)
+    else
+        if infJumpConnection then infJumpConnection:Disconnect() end
+    end
+end)
+
+-- FULLBRIGHT
+CreateToggle("Fullbright (Night Vision)", function(state)
+    if state then
+        game:GetService("Lighting").Ambient = Color3.fromRGB(255, 255, 255)
+        game:GetService("Lighting").Brightness = 2
+    else
+        game:GetService("Lighting").Ambient = Color3.fromRGB(127, 127, 127)
+        game:GetService("Lighting").Brightness = 1
+    end
+end)
+
+-- AUTO-CLICKER (For fast building/hammering)
+local autoClicking = false
+CreateToggle("Fast Build/Auto-Click", function(state)
+    autoClicking = state
+    task.spawn(function()
+        while autoClicking do
+            local tool = Player.Character:FindFirstChildOfClass("Tool")
+            if tool then tool:Activate() end
+            task.wait(0.1)
+        end
+    end)
+end)
+
+-- ANTI-NUKER (Sets FOV high to see the blast coming)
+CreateToggle("Wide FOV (Survival View)", function(state)
+    workspace.CurrentCamera.FieldOfView = state and 110 or 70
+end)
+
+-------------------------------------------------------------------------
+-- 4. KEY SYSTEM (Movable)
+-------------------------------------------------------------------------
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0, 300, 0, 180)
+KeyFrame.Position = UDim2.new(0.5, -150, 0.5, -90)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+KeyFrame.Parent = ScreenGui
+Instance.new("UICorner", KeyFrame)
+ApplyDrag(KeyFrame)
+
+local KTitle = Instance.new("TextLabel")
+KTitle.Text = "ENTER KEY TO ACCESS"
+KTitle.Size = UDim2.new(1, 0, 0, 40)
+KTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KTitle.Font = Enum.Font.GothamBold
+KTitle.BackgroundTransparency = 1
+KTitle.Parent = KeyFrame
+
+local KInput = Instance.new("TextBox")
+KInput.PlaceholderText = "Get Key to Unlock..."
+KInput.Size = UDim2.new(0.8, 0, 0, 40)
+KInput.Position = UDim2.new(0.1, 0, 0.3, 0)
+KInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+KInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+KInput.Font = Enum.Font.Gotham
+KInput.Parent = KeyFrame
+
+local GetBtn = Instance.new("TextButton")
+GetBtn.Text = "GET KEY"
+GetBtn.Size = UDim2.new(0.35, 0, 0, 35)
+GetBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+GetBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+GetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetBtn.Font = Enum.Font.GothamBold
+GetBtn.Parent = KeyFrame
+GetBtn.MouseButton1Click:Connect(function() KInput.Text = KEY end)
+
+local Submit = Instance.new("TextButton")
+Submit.Text = "VERIFY"
+Submit.Size = UDim2.new(0.35, 0, 0, 35)
+Submit.Position = UDim2.new(0.55, 0, 0.65, 0)
+Submit.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+Submit.TextColor3 = Color3.fromRGB(25, 25, 25)
+Submit.Font = Enum.Font.GothamBold
+Submit.Parent = KeyFrame
+
+Submit.MouseButton1Click:Connect(function()
+    if KInput.Text == KEY then
+        KeyFrame:Destroy()
+        Main.Visible = true
+    end
+end)
+
+-- TOGGLE
+UserInputService.InputBegan:Connect(function(input, gp)
+    if not gp and input.KeyCode == TOGGLE_KEY then
+        Main.Visible = not Main.Visible
+    end
+end)
