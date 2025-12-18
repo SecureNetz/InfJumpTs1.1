@@ -1,0 +1,291 @@
+-- FE Animation Loader GUI (Full Featured)
+-- Load any Roblox animation ID instantly!
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Create ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AnimationLoader"
+ScreenGui.Parent = playerGui
+ScreenGui.ResetOnSpawn = false
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Active = true
+MainFrame.Draggable = true
+
+-- Corner Radius
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = MainFrame
+
+-- Stroke
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(0, 162, 255)
+UIStroke.Thickness = 2
+UIStroke.Parent = MainFrame
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Parent = MainFrame
+Title.BackgroundTransparency = 1
+Title.Position = UDim2.new(0, 20, 0, 15)
+Title.Size = UDim2.new(1, -40, 0, 35)
+Title.Font = Enum.Font.GothamBold
+Title.Text = "🎭 FE Animation Loader"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextScaled = true
+Title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Input Box
+local InputBox = Instance.new("TextBox")
+InputBox.Name = "InputBox"
+InputBox.Parent = MainFrame
+InputBox.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+InputBox.Position = UDim2.new(0, 20, 0, 70)
+InputBox.Size = UDim2.new(1, -40, 0, 40)
+InputBox.Font = Enum.Font.Gotham
+InputBox.PlaceholderText = "Enter Animation ID (e.g. 507766388)"
+InputBox.Text = ""
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.TextScaled = true
+InputBox.ClearTextOnFocus = false
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 8)
+InputCorner.Parent = InputBox
+
+local InputStroke = Instance.new("UIStroke")
+InputStroke.Color = Color3.fromRGB(80, 80, 90)
+InputStroke.Thickness = 1.5
+InputStroke.Parent = InputBox
+
+-- Load Button
+local LoadButton = Instance.new("TextButton")
+LoadButton.Name = "LoadButton"
+LoadButton.Parent = MainFrame
+LoadButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
+LoadButton.Position = UDim2.new(0, 20, 0, 130)
+LoadButton.Size = UDim2.new(0.48, -25, 0, 45)
+LoadButton.Font = Enum.Font.GothamBold
+LoadButton.Text = "LOAD ANIMATION"
+LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+LoadButton.TextScaled = true
+
+local LoadCorner = Instance.new("UICorner")
+LoadCorner.CornerRadius = UDim.new(0, 8)
+LoadCorner.Parent = LoadButton
+
+local LoadStroke = Instance.new("UIStroke")
+LoadStroke.Color = Color3.fromRGB(0, 140, 220)
+LoadStroke.Thickness = 1.5
+LoadStroke.Parent = LoadButton
+
+-- Stop Button
+local StopButton = Instance.new("TextButton")
+StopButton.Name = "StopButton"
+StopButton.Parent = MainFrame
+StopButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+StopButton.Position = UDim2.new(0.52, -20, 0, 130)
+StopButton.Size = UDim2.new(0.48, -25, 0, 45)
+StopButton.Font = Enum.Font.GothamBold
+StopButton.Text = "STOP ANIMATION"
+StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopButton.TextScaled = true
+
+local StopCorner = Instance.new("UICorner")
+StopCorner.CornerRadius = UDim.new(0, 8)
+StopCorner.Parent = StopButton
+
+local StopStroke = Instance.new("UIStroke")
+StopStroke.Color = Color3.fromRGB(220, 60, 60)
+StopStroke.Thickness = 1.5
+StopStroke.Parent = StopButton
+
+-- Preset Buttons Frame
+local PresetFrame = Instance.new("ScrollingFrame")
+PresetFrame.Name = "PresetFrame"
+PresetFrame.Parent = MainFrame
+PresetFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+PresetFrame.Position = UDim2.new(0, 20, 0, 195)
+PresetFrame.Size = UDim2.new(1, -40, 0, 95)
+PresetFrame.ScrollBarThickness = 6
+PresetFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 162, 255)
+
+local PresetCorner = Instance.new("UICorner")
+PresetCorner.CornerRadius = UDim.new(0, 8)
+PresetCorner.Parent = PresetFrame
+
+-- Presets List
+local Presets = {
+    {name = "Wave", id = "507766388"},
+    {name = "Floss", id = "505757002"},
+    {name = "Default Dance", id = "522635514"},
+    {name = "Crab Rave", id = "522635821"},
+    {name = "Yoshi", id = "177137849"},
+    {name = "Titanic", id = "239750026"},
+    {name = "Llama", id = "254688047"},
+    {name = "Boxing", id = "256126381"},
+    {name = "Ninja", id = "616799860"},
+    {name = "Greed", id = "619315086"}
+}
+
+local PresetLayout = Instance.new("UIListLayout")
+PresetLayout.Parent = PresetFrame
+PresetLayout.Padding = UDim.new(0, 5)
+PresetLayout.FillDirection = Enum.FillDirection.Horizontal
+PresetLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Create Preset Buttons
+for i, preset in ipairs(Presets) do
+    local PresetBtn = Instance.new("TextButton")
+    PresetBtn.Name = preset.name
+    PresetBtn.Parent = PresetFrame
+    PresetBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    PresetBtn.Size = UDim2.new(0.3, 0, 0, 30)
+    PresetBtn.Font = Enum.Font.Gotham
+    PresetBtn.Text = preset.name
+    PresetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    PresetBtn.TextScaled = true
+    PresetBtn.LayoutOrder = i
+    
+    local PresetBtnCorner = Instance.new("UICorner")
+    PresetBtnCorner.CornerRadius = UDim.new(0, 6)
+    PresetBtnCorner.Parent = PresetBtn
+    
+    PresetBtn.MouseButton1Click:Connect(function()
+        InputBox.Text = preset.id
+        TweenService:Create(PresetBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 100)}):Play()
+        wait(0.3)
+        TweenService:Create(PresetBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}):Play()
+    end)
+end
+
+PresetFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+-- Status Label
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Name = "StatusLabel"
+StatusLabel.Parent = MainFrame
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Position = UDim2.new(0, 20, 1, -35)
+StatusLabel.Size = UDim2.new(1, -40, 0, 25)
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.Text = "Ready to load animations!"
+StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+StatusLabel.TextScaled = true
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Animation Functions
+local currentAnim = nil
+
+local function loadAnimation(animationId)
+    if not player.Character or not player.Character:FindFirstChild("Humanoid") then
+        StatusLabel.Text = "❌ No character found!"
+        return
+    end
+    
+    local success, err = pcall(function()
+        -- Stop current animation
+        if currentAnim then
+            currentAnim:Stop()
+            currentAnim:Destroy()
+        end
+        
+        -- Load new animation
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://" .. animationId
+        currentAnim = player.Character.Humanoid:LoadAnimation(anim)
+        currentAnim:Play()
+        
+        StatusLabel.Text = "✅ Loaded: " .. animationId
+        StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+    end)
+    
+    if not success then
+        StatusLabel.Text = "❌ Invalid ID: " .. tostring(err)
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end
+
+local function stopAnimation()
+    if currentAnim then
+        currentAnim:Stop()
+        currentAnim:Destroy()
+        currentAnim = nil
+        StatusLabel.Text = "⏹️ Animation stopped!"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
+    else
+        StatusLabel.Text = "ℹ️ No animation playing"
+        StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
+    end
+end
+
+-- Button Events
+LoadButton.MouseButton1Click:Connect(function()
+    local animId = InputBox.Text:match("%d+")
+    if animId then
+        loadAnimation(animId)
+    else
+        StatusLabel.Text = "❌ Enter a valid number!"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+StopButton.MouseButton1Click:Connect(function()
+    stopAnimation()
+end)
+
+-- Enter key support
+InputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local animId = InputBox.Text:match("%d+")
+        if animId then
+            loadAnimation(animId)
+        end
+    end
+end)
+
+-- Button hover effects
+local function addHover(button, hoverColor, normalColor)
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = hoverColor}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = normalColor}):Play()
+    end)
+end
+
+addHover(LoadButton, Color3.fromRGB(0, 180, 255), Color3.fromRGB(0, 162, 255))
+addHover(StopButton, Color3.fromRGB(255, 100, 100), Color3.fromRGB(255, 80, 80))
+
+-- Toggle GUI (Right Shift)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- Initial hide
+MainFrame.Visible = false
+StatusLabel.Text = "Press RIGHT SHIFT to toggle GUI"
+
+print("🎭 FE Animation Loader Loaded!")
+print("• Drag GUI anywhere")
+print("• RIGHT SHIFT = Toggle GUI")
+print("• Enter ID and click LOAD")
+print("• 10+ Popular presets included!")
