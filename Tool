@@ -1,193 +1,336 @@
+--[[ 
+    PROFESSIONAL R15 EMOTE GUI + KEY SYSTEM 
+    Made for R15 Avatars Only
+]]
+
 local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
-local mouse = player:GetMouse()
 
--- CONFIG
-local CORRECT_KEY = "DELTA-2025"
-local ACCENT_COLOR = Color3.fromRGB(0, 255, 160)
+local Player = Players.LocalPlayer
+local Mouse = Player:GetMouse()
 
--- CLEANUP
-if player.PlayerGui:FindFirstChild("DeltaFluent") then player.PlayerGui.DeltaFluent:Destroy() end
+-- Configuration
+local KEY_CODE = "R15-PRO-2025" -- The key to unlock the UI
+local UI_TOGGLE_KEY = Enum.KeyCode.RightControl -- Key to toggle UI visibility
 
-local Gui = Instance.new("ScreenGui", player.PlayerGui)
-Gui.Name = "DeltaFluent"
-Gui.IgnoreGuiInset = true
+-------------------------------------------------------------------------
+-- 1. SETUP SCREEN GUI
+-------------------------------------------------------------------------
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ProEmoteUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+-- Try to parent to CoreGui for exploiters, or PlayerGui for Studio
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = Player:WaitForChild("PlayerGui") end
 
--- HELPER: Create Smooth Tween
-local function quickTween(obj, info, goal)
-    return TweenService:Create(obj, TweenInfo.new(unpack(info)), goal):Play()
-end
-
--- 1. OPENING SCREEN (SPLASH)
-local Splash = Instance.new("Frame", Gui)
-Splash.Size = UDim2.new(1, 0, 1, 0)
-Splash.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
-Splash.ZIndex = 10
-
-local Logo = Instance.new("TextLabel", Splash)
-Logo.Size = UDim2.new(0, 200, 0, 200)
-Logo.Position = UDim2.new(0.5, -100, 0.4, -100)
-Logo.BackgroundTransparency = 1
-Logo.Text = "🎭"
-Logo.TextSize = 100
-Logo.TextTransparency = 1
-
-local LoadBarBase = Instance.new("Frame", Splash)
-LoadBarBase.Size = UDim2.new(0, 300, 0, 4)
-LoadBarBase.Position = UDim2.new(0.5, -150, 0.6, 0)
-LoadBarBase.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-LoadBarBase.BorderSizePixel = 0
-
-local LoadBar = Instance.new("Frame", LoadBarBase)
-LoadBar.Size = UDim2.new(0, 0, 1, 0)
-LoadBar.BackgroundColor3 = ACCENT_COLOR
-LoadBar.BorderSizePixel = 0
-
--- 2. KEY SYSTEM UI
-local KeyFrame = Instance.new("Frame", Gui)
-KeyFrame.Size = UDim2.new(0, 350, 0, 200)
-KeyFrame.Position = UDim2.new(0.5, -175, 0.5, -100)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-KeyFrame.Visible = false
-Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 12)
-Instance.new("UIStroke", KeyFrame).Color = ACCENT_COLOR
-
-local KeyInput = Instance.new("TextBox", KeyFrame)
-KeyInput.Size = UDim2.new(0.8, 0, 0, 45)
-KeyInput.Position = UDim2.new(0.1, 0, 0.4, 0)
-KeyInput.PlaceholderText = "Enter Key..."
-KeyInput.Text = ""
-KeyInput.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-KeyInput.TextColor3 = Color3.new(1,1,1)
-KeyInput.Font = Enum.Font.Gotham
-Instance.new("UICorner", KeyInput)
-
-local VerifyBtn = Instance.new("TextButton", KeyFrame)
-VerifyBtn.Size = UDim2.new(0.8, 0, 0, 40)
-VerifyBtn.Position = UDim2.new(0.1, 0, 0.7, 0)
-VerifyBtn.BackgroundColor3 = ACCENT_COLOR
-VerifyBtn.Text = "VERIFY"
-VerifyBtn.Font = Enum.Font.GothamBold
-VerifyBtn.TextColor3 = Color3.fromRGB(20,20,25)
-Instance.new("UICorner", VerifyBtn)
-
--- 3. MAIN HUB (Hidden until verified)
-local Main = Instance.new("Frame", Gui)
-Main.Size = UDim2.new(0, 400, 0, 500)
-Main.Position = UDim2.new(0.5, -200, 0.5, -250)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Main.Visible = false
-Main.ClipsDescendants = true
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
-local MainStroke = Instance.new("UIStroke", Main)
-MainStroke.Color = ACCENT_COLOR
-MainStroke.Thickness = 2
-
--- (Add Draggable Logic)
-local function makeDraggable(frame)
+-------------------------------------------------------------------------
+-- 2. UI LIBRARY / HELPER FUNCTIONS
+-------------------------------------------------------------------------
+local function MakeDraggable(frame)
     local dragging, dragInput, dragStart, startPos
+    
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true; dragStart = input.Position; startPos = frame.Position
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
         end
     end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    frame.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
-end
-makeDraggable(Main)
-
--- ANIMATION ENGINE
-local currentTrack = nil
-local function play(id)
-    if currentTrack then currentTrack:Stop() end
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://" .. tostring(id)
-    local success, track = pcall(function() return player.Character.Humanoid.Animator:LoadAnimation(anim) end)
-    if success then
-        currentTrack = track
-        currentTrack.Looped = true
-        currentTrack:Play()
-    end
-end
-
--- LOADING SEQUENCE
-task.spawn(function()
-    quickTween(Logo, {1.5, Enum.EasingStyle.Quart}, {TextTransparency = 0})
-    quickTween(LoadBar, {3, Enum.EasingStyle.Quint}, {Size = UDim2.new(1, 0, 1, 0)})
-    task.wait(3.2)
-    quickTween(Splash, {0.5}, {BackgroundTransparency = 1})
-    quickTween(Logo, {0.3}, {TextTransparency = 1})
-    quickTween(LoadBarBase, {0.3}, {BackgroundTransparency = 1})
-    quickTween(LoadBar, {0.3}, {BackgroundTransparency = 1})
-    task.wait(0.5)
-    Splash.Visible = false
-    KeyFrame.Visible = true
-    KeyFrame.Size = UDim2.new(0,0,0,0)
-    quickTween(KeyFrame, {0.5, Enum.EasingStyle.Back}, {Size = UDim2.new(0, 350, 0, 200)})
-end)
-
--- VERIFICATION LOGIC
-VerifyBtn.MouseButton1Click:Connect(function()
-    if KeyInput.Text == CORRECT_KEY then
-        quickTween(KeyFrame, {0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In}, {Size = UDim2.new(0,0,0,0)})
-        task.wait(0.4)
-        KeyFrame.Visible = false
-        Main.Visible = true
-        Main.Size = UDim2.new(0,0,0,0)
-        quickTween(Main, {0.6, Enum.EasingStyle.Back}, {Size = UDim2.new(0, 400, 0, 500)})
-        
-        -- Create Tool after verification
-        local Tool = Instance.new("Tool", player.Backpack)
-        Tool.Name = "🎭 Delta Hub"
-        Tool.RequiresHandle = false
-        Tool.Equipped:Connect(function() Main.Visible = true end)
-        Tool.Unequipped:Connect(function() Main.Visible = false end)
-    else
-        KeyInput.Text = ""
-        KeyInput.PlaceholderText = "WRONG KEY!"
-        quickTween(MainStroke, {0.1}, {Color = Color3.new(1,0,0)})
-        task.wait(0.5)
-        MainStroke.Color = ACCENT_COLOR
-    end
-end)
-
--- ADD CONTENT TO MAIN
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 60)
-Title.Text = "DELTA HUB PRO"
-Title.Font = Enum.Font.GothamBold
-Title.TextColor3 = ACCENT_COLOR
-Title.BackgroundTransparency = 1
-Title.TextSize = 20
-
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(0.9, 0, 0.7, 0)
-Scroll.Position = UDim2.new(0.05, 0, 0.2, 0)
-Scroll.BackgroundTransparency = 1
-Scroll.CanvasSize = UDim2.new(0,0,2,0)
-Scroll.ScrollBarThickness = 2
-
-local layout = Instance.new("UIListLayout", Scroll)
-layout.Padding = UDim.new(0,10)
-
-local dances = {{"Hype", 3695333486}, {"Old School", 3333331385}, {"Robot", 3333499508}, {"Stop", 0}}
-for _, d in pairs(dances) do
-    local b = Instance.new("TextButton", Scroll)
-    b.Size = UDim2.new(1, 0, 0, 50)
-    b.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    b.Text = d[1]
-    b.TextColor3 = Color3.new(1,1,1)
-    b.Font = Enum.Font.GothamMedium
-    Instance.new("UICorner", b)
     
-    b.MouseButton1Click:Connect(function()
-        if d[2] == 0 then if currentTrack then currentTrack:Stop() end else play(d[2]) end
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            TweenService:Create(frame, TweenInfo.new(0.15), {
+                Position = UDim2.new(
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
+                )
+            }):Play()
+        end
     end)
 end
+
+local function CreateRounded(obj, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 8)
+    corner.Parent = obj
+    return corner
+end
+
+local function AddStroke(obj, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Thickness = thickness or 1
+    stroke.Color = Color3.fromRGB(50, 50, 50)
+    stroke.Transparency = transparency or 0.5
+    stroke.Parent = obj
+    return stroke
+end
+
+-------------------------------------------------------------------------
+-- 3. KEY SYSTEM UI
+-------------------------------------------------------------------------
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Name = "KeySystem"
+KeyFrame.Size = UDim2.new(0, 350, 0, 220)
+KeyFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Parent = ScreenGui
+CreateRounded(KeyFrame, 10)
+MakeDraggable(KeyFrame)
+
+local KeyTitle = Instance.new("TextLabel")
+KeyTitle.Text = "SECURITY CHECK"
+KeyTitle.Font = Enum.Font.GothamBold
+KeyTitle.TextSize = 18
+KeyTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+KeyTitle.Size = UDim2.new(1, 0, 0, 40)
+KeyTitle.BackgroundTransparency = 1
+KeyTitle.Parent = KeyFrame
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Name = "Input"
+KeyBox.Size = UDim2.new(0.8, 0, 0, 40)
+KeyBox.Position = UDim2.new(0.1, 0, 0.3, 0)
+KeyBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+KeyBox.TextColor3 = Color3.fromRGB(200, 200, 200)
+KeyBox.PlaceholderText = "Enter Key Here..."
+KeyBox.Font = Enum.Font.Gotham
+KeyBox.TextSize = 14
+KeyBox.Parent = KeyFrame
+CreateRounded(KeyBox, 6)
+
+local GetKeyBtn = Instance.new("TextButton")
+GetKeyBtn.Text = "Get Key"
+GetKeyBtn.Size = UDim2.new(0.35, 0, 0, 35)
+GetKeyBtn.Position = UDim2.new(0.1, 0, 0.6, 0)
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0) -- Orange
+GetKeyBtn.TextColor3 = Color3.fromRGB(25, 25, 25)
+GetKeyBtn.Font = Enum.Font.GothamBold
+GetKeyBtn.TextSize = 14
+GetKeyBtn.Parent = KeyFrame
+CreateRounded(GetKeyBtn, 6)
+
+local SubmitBtn = Instance.new("TextButton")
+SubmitBtn.Text = "Verify"
+SubmitBtn.Size = UDim2.new(0.35, 0, 0, 35)
+SubmitBtn.Position = UDim2.new(0.55, 0, 0.6, 0)
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255) -- Blue
+SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitBtn.Font = Enum.Font.GothamBold
+SubmitBtn.TextSize = 14
+SubmitBtn.Parent = KeyFrame
+CreateRounded(SubmitBtn, 6)
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Text = "Status: Locked"
+StatusText.Size = UDim2.new(1, 0, 0, 20)
+StatusText.Position = UDim2.new(0, 0, 0.85, 0)
+StatusText.BackgroundTransparency = 1
+StatusText.TextColor3 = Color3.fromRGB(150, 150, 150)
+StatusText.Font = Enum.Font.Gotham
+StatusText.TextSize = 12
+StatusText.Parent = KeyFrame
+
+-------------------------------------------------------------------------
+-- 4. MAIN EMOTE UI (Hidden initially)
+-------------------------------------------------------------------------
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainInterface"
+MainFrame.Size = UDim2.new(0, 450, 0, 350)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -175)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+MainFrame.Visible = false -- Hidden until key is entered
+MainFrame.Parent = ScreenGui
+CreateRounded(MainFrame, 12)
+AddStroke(MainFrame, 2, 0.6)
+MakeDraggable(MainFrame)
+
+-- Title Bar
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+TitleBar.Parent = MainFrame
+CreateRounded(TitleBar, 12) -- Rounding top matches
+local TitleCover = Instance.new("Frame") -- Covers bottom corners of title bar
+TitleCover.Size = UDim2.new(1, 0, 0, 10)
+TitleCover.Position = UDim2.new(0, 0, 1, -10)
+TitleCover.BackgroundColor3 = TitleBar.BackgroundColor3
+TitleCover.BorderSizePixel = 0
+TitleCover.Parent = TitleBar
+
+local MainTitle = Instance.new("TextLabel")
+MainTitle.Text = "R15 PRO EMOTES"
+MainTitle.Font = Enum.Font.GothamBlack
+MainTitle.TextSize = 16
+MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainTitle.Size = UDim2.new(1, -50, 1, 0)
+MainTitle.Position = UDim2.new(0, 15, 0, 0)
+MainTitle.BackgroundTransparency = 1
+MainTitle.TextXAlignment = Enum.TextXAlignment.Left
+MainTitle.Parent = TitleBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Text = "X"
+CloseBtn.Size = UDim2.new(0, 40, 0, 40)
+CloseBtn.Position = UDim2.new(1, -40, 0, 0)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.TextColor3 = Color3.fromRGB(200, 50, 50)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 18
+CloseBtn.Parent = TitleBar
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui.Enabled = false end)
+
+-- Scrolling Container
+local Scroll = Instance.new("ScrollingFrame")
+Scroll.Size = UDim2.new(1, -20, 1, -60)
+Scroll.Position = UDim2.new(0, 10, 0, 50)
+Scroll.BackgroundTransparency = 1
+Scroll.BorderSizePixel = 0
+Scroll.ScrollBarThickness = 4
+Scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 170, 255)
+Scroll.Parent = MainFrame
+
+local GridLayout = Instance.new("UIGridLayout")
+GridLayout.CellSize = UDim2.new(0, 135, 0, 40)
+GridLayout.CellPadding = UDim2.new(0, 5, 0, 5)
+GridLayout.Parent = Scroll
+
+-------------------------------------------------------------------------
+-- 5. ANIMATION LIST (20+ R15 IDs)
+-------------------------------------------------------------------------
+local Emotes = {
+    {Name = "Dance 1", ID = "12521009666"},
+    {Name = "Dance 2", ID = "12521151637"},
+    {Name = "Dance 3", ID = "12521015053"},
+    {Name = "Point", ID = "12521007694"},
+    {Name = "Wave", ID = "12521004586"},
+    {Name = "Cheer", ID = "12521021991"},
+    {Name = "Laugh", ID = "12521018724"},
+    {Name = "Sit", ID = "12520993168"},
+    {Name = "Ninja Dash", ID = "13978512316"},
+    {Name = "Ninja Slash", ID = "13978507503"},
+    {Name = "Zombie Idle", ID = "13842624027"},
+    {Name = "Stylish Idle", ID = "13842624352"},
+    {Name = "Magician", ID = "13842624036"},
+    {Name = "Toy Walk", ID = "12518152696"},
+    {Name = "Climb", ID = "12520982150"},
+    {Name = "Fall", ID = "12520972571"},
+    {Name = "Jump", ID = "12520880485"},
+    {Name = "Lunge", ID = "12521002003"},
+    {Name = "Slash", ID = "12520999032"},
+    {Name = "Idle Loop", ID = "12521158637"},
+    {Name = "Crazy Run", ID = "12518152696"},
+}
+
+-- Play Animation Function
+local currentTrack = nil
+local function PlayEmote(id)
+    local char = Player.Character
+    if not char then return end
+    local hum = char:FindFirstChild("Humanoid")
+    if not hum then return end
+    
+    -- Stop previous
+    if currentTrack then currentTrack:Stop() end
+    
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://" .. id
+    
+    currentTrack = hum:LoadAnimation(anim)
+    currentTrack.Priority = Enum.AnimationPriority.Action
+    currentTrack.Looped = true
+    currentTrack:Play()
+end
+
+-- Generate Buttons
+for _, emote in ipairs(Emotes) do
+    local btn = Instance.new("TextButton")
+    btn.Name = emote.Name
+    btn.Text = emote.Name
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    btn.TextColor3 = Color3.fromRGB(220, 220, 220)
+    btn.Font = Enum.Font.GothamSemibold
+    btn.TextSize = 13
+    btn.Parent = Scroll
+    CreateRounded(btn, 6)
+    
+    btn.MouseButton1Click:Connect(function()
+        PlayEmote(emote.ID)
+    end)
+end
+
+-- Stop Button
+local StopBtn = Instance.new("TextButton")
+StopBtn.Name = "StopAnimation"
+StopBtn.Text = "STOP ALL"
+StopBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopBtn.Font = Enum.Font.GothamBold
+StopBtn.TextSize = 14
+StopBtn.Parent = Scroll
+CreateRounded(StopBtn, 6)
+StopBtn.MouseButton1Click:Connect(function()
+    if currentTrack then currentTrack:Stop() end
+    -- Fallback to stop all tracks
+    local char = Player.Character
+    if char and char:FindFirstChild("Humanoid") then
+        for _, track in pairs(char.Humanoid:GetPlayingAnimationTracks()) do
+            track:Stop()
+        end
+    end
+end)
+
+-------------------------------------------------------------------------
+-- 6. KEY SYSTEM LOGIC
+-------------------------------------------------------------------------
+GetKeyBtn.MouseButton1Click:Connect(function()
+    KeyBox.Text = KEY_CODE
+    StatusText.Text = "Status: Key Copied (It is in the box!)"
+    StatusText.TextColor3 = Color3.fromRGB(255, 200, 0)
+    task.wait(2)
+    StatusText.Text = "Status: Locked"
+    StatusText.TextColor3 = Color3.fromRGB(150, 150, 150)
+end)
+
+SubmitBtn.MouseButton1Click:Connect(function()
+    if KeyBox.Text == KEY_CODE then
+        StatusText.Text = "Status: Success!"
+        StatusText.TextColor3 = Color3.fromRGB(0, 255, 100)
+        task.wait(0.5)
+        
+        -- Animation to hide key frame and show main frame
+        KeyFrame:TweenPosition(UDim2.new(0.5, -175, 1.5, 0), "Out", "Quad", 0.5, true)
+        task.wait(0.5)
+        KeyFrame.Visible = false
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        MainFrame:TweenSize(UDim2.new(0, 450, 0, 350), "Out", "Back", 0.5, true)
+    else
+        StatusText.Text = "Status: Incorrect Key"
+        StatusText.TextColor3 = Color3.fromRGB(255, 50, 50)
+        KeyBox.Text = ""
+    end
+end)
+
+-- Toggle Visibility
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == UI_TOGGLE_KEY and not gameProcessed then
+        ScreenGui.Enabled = not ScreenGui.Enabled
+    end
+end)
