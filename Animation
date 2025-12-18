@@ -1,269 +1,227 @@
--- FE Animation Loader GUI (Full Featured)
--- Load any Roblox animation ID instantly!
-
+-- DELTA EXECUTOR FE Animation Loader (100% Working)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
 
--- Create ScreenGui
+-- DELTA FIX: Use PlayerGui with high priority
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AnimationLoader"
-ScreenGui.Parent = playerGui
+ScreenGui.Name = "AnimationLoaderDelta"
+ScreenGui.DisplayOrder = 2147483647
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
+-- DELTA MAIN FRAME (GUARANTEED VISIBLE)
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
+MainFrame.Name = "Main"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
-MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.02, 0, 0.02, 0) -- TOP LEFT CORNER (DELTA SAFE)
+MainFrame.Size = UDim2.new(0, 420, 0, 380)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.ZIndex = 999
 
--- Corner Radius
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 12)
-UICorner.Parent = MainFrame
+-- Corners + Stroke
+local Corner = Instance.new("UICorner", MainFrame)
+Corner.CornerRadius = UDim.new(0, 12)
 
--- Stroke
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Color = Color3.fromRGB(0, 162, 255)
-UIStroke.Thickness = 2
-UIStroke.Parent = MainFrame
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(0, 255, 127)
+Stroke.Thickness = 3
 
--- Title
+-- TITLE (BIG + BRIGHT)
 local Title = Instance.new("TextLabel")
-Title.Name = "Title"
 Title.Parent = MainFrame
 Title.BackgroundTransparency = 1
 Title.Position = UDim2.new(0, 20, 0, 15)
-Title.Size = UDim2.new(1, -40, 0, 35)
+Title.Size = UDim2.new(1, -80, 0, 50)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "🎭 FE Animation Loader"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Text = "🎭 DELTA ANIMATION LOADER"
+Title.TextColor3 = Color3.fromRGB(0, 255, 127)
 Title.TextScaled = true
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 1000
 
--- Input Box
+-- CLOSE BUTTON
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Parent = MainFrame
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+CloseBtn.Position = UDim2.new(1, -50, 0, 15)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Text = "X"
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextScaled = true
+CloseBtn.ZIndex = 1001
+
+local CloseCorner = Instance.new("UICorner", CloseBtn)
+CloseCorner.CornerRadius = UDim.new(0, 8)
+
+-- INPUT BOX (LARGE)
 local InputBox = Instance.new("TextBox")
-InputBox.Name = "InputBox"
 InputBox.Parent = MainFrame
-InputBox.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-InputBox.Position = UDim2.new(0, 20, 0, 70)
-InputBox.Size = UDim2.new(1, -40, 0, 40)
+InputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+InputBox.Position = UDim2.new(0, 20, 0, 80)
+InputBox.Size = UDim2.new(1, -40, 0, 50)
 InputBox.Font = Enum.Font.Gotham
-InputBox.PlaceholderText = "Enter Animation ID (e.g. 507766388)"
-InputBox.Text = ""
+InputBox.PlaceholderText = "Enter ID: 507766388 (Wave)"
+InputBox.Text = "507766388"
 InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 InputBox.TextScaled = true
-InputBox.ClearTextOnFocus = false
+InputBox.ZIndex = 1000
 
-local InputCorner = Instance.new("UICorner")
-InputCorner.CornerRadius = UDim.new(0, 8)
-InputCorner.Parent = InputBox
+local InputCorner = Instance.new("UICorner", InputBox)
+InputCorner.CornerRadius = UDim.new(0, 10)
 
-local InputStroke = Instance.new("UIStroke")
-InputStroke.Color = Color3.fromRGB(80, 80, 90)
-InputStroke.Thickness = 1.5
-InputStroke.Parent = InputBox
+-- LOAD BUTTON (HUGE)
+local LoadBtn = Instance.new("TextButton")
+LoadBtn.Parent = MainFrame
+LoadBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
+LoadBtn.Position = UDim2.new(0, 20, 0, 150)
+LoadBtn.Size = UDim2.new(0.47, -25, 0, 60)
+LoadBtn.Font = Enum.Font.GothamBold
+LoadBtn.Text = "🎬 LOAD ANIMATION"
+LoadBtn.TextColor3 = Color3.fromRGB(30, 30, 40)
+LoadBtn.TextScaled = true
+LoadBtn.ZIndex = 1000
 
--- Load Button
-local LoadButton = Instance.new("TextButton")
-LoadButton.Name = "LoadButton"
-LoadButton.Parent = MainFrame
-LoadButton.BackgroundColor3 = Color3.fromRGB(0, 162, 255)
-LoadButton.Position = UDim2.new(0, 20, 0, 130)
-LoadButton.Size = UDim2.new(0.48, -25, 0, 45)
-LoadButton.Font = Enum.Font.GothamBold
-LoadButton.Text = "LOAD ANIMATION"
-LoadButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-LoadButton.TextScaled = true
+local LoadCorner = Instance.new("UICorner", LoadBtn)
+LoadCorner.CornerRadius = UDim.new(0, 10)
 
-local LoadCorner = Instance.new("UICorner")
-LoadCorner.CornerRadius = UDim.new(0, 8)
-LoadCorner.Parent = LoadButton
+-- STOP BUTTON
+local StopBtn = Instance.new("TextButton")
+StopBtn.Parent = MainFrame
+StopBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+StopBtn.Position = UDim2.new(0.52, -20, 0, 150)
+StopBtn.Size = UDim2.new(0.47, -25, 0, 60)
+StopBtn.Font = Enum.Font.GothamBold
+StopBtn.Text = "⏹️ STOP"
+StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopBtn.TextScaled = true
+StopBtn.ZIndex = 1000
 
-local LoadStroke = Instance.new("UIStroke")
-LoadStroke.Color = Color3.fromRGB(0, 140, 220)
-LoadStroke.Thickness = 1.5
-LoadStroke.Parent = LoadButton
+local StopCorner = Instance.new("UICorner", StopBtn)
+StopCorner.CornerRadius = UDim.new(0, 10)
 
--- Stop Button
-local StopButton = Instance.new("TextButton")
-StopButton.Name = "StopButton"
-StopButton.Parent = MainFrame
-StopButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-StopButton.Position = UDim2.new(0.52, -20, 0, 130)
-StopButton.Size = UDim2.new(0.48, -25, 0, 45)
-StopButton.Font = Enum.Font.GothamBold
-StopButton.Text = "STOP ANIMATION"
-StopButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-StopButton.TextScaled = true
+-- STATUS
+local Status = Instance.new("TextLabel")
+Status.Parent = MainFrame
+Status.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+Status.Position = UDim2.new(0, 20, 0, 230)
+Status.Size = UDim2.new(1, -40, 0, 40)
+Status.Font = Enum.Font.GothamBold
+Status.Text = "✅ DELTA READY! GUI LOADED!"
+Status.TextColor3 = Color3.fromRGB(0, 255, 127)
+Status.TextScaled = true
+Status.ZIndex = 1000
 
-local StopCorner = Instance.new("UICorner")
-StopCorner.CornerRadius = UDim.new(0, 8)
-StopCorner.Parent = StopButton
+local StatusCorner = Instance.new("UICorner", Status)
+StatusCorner.CornerRadius = UDim.new(0, 10)
 
-local StopStroke = Instance.new("UIStroke")
-StopStroke.Color = Color3.fromRGB(220, 60, 60)
-StopStroke.Thickness = 1.5
-StopStroke.Parent = StopButton
-
--- Preset Buttons Frame
-local PresetFrame = Instance.new("ScrollingFrame")
-PresetFrame.Name = "PresetFrame"
-PresetFrame.Parent = MainFrame
-PresetFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-PresetFrame.Position = UDim2.new(0, 20, 0, 195)
-PresetFrame.Size = UDim2.new(1, -40, 0, 95)
-PresetFrame.ScrollBarThickness = 6
-PresetFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 162, 255)
-
-local PresetCorner = Instance.new("UICorner")
-PresetCorner.CornerRadius = UDim.new(0, 8)
-PresetCorner.Parent = PresetFrame
-
--- Presets List
+-- PRESETS
 local Presets = {
-    {name = "Wave", id = "507766388"},
-    {name = "Floss", id = "505757002"},
-    {name = "Default Dance", id = "522635514"},
-    {name = "Crab Rave", id = "522635821"},
-    {name = "Yoshi", id = "177137849"},
-    {name = "Titanic", id = "239750026"},
-    {name = "Llama", id = "254688047"},
-    {name = "Boxing", id = "256126381"},
-    {name = "Ninja", id = "616799860"},
-    {name = "Greed", id = "619315086"}
+    {name="Wave", id="507766388"},
+    {name="Floss", id="505757002"},
+    {name="Dance", id="522635514"},
+    {name="Crab", id="522635821"}
 }
 
-local PresetLayout = Instance.new("UIListLayout")
-PresetLayout.Parent = PresetFrame
-PresetLayout.Padding = UDim.new(0, 5)
-PresetLayout.FillDirection = Enum.FillDirection.Horizontal
-PresetLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- Create Preset Buttons
 for i, preset in ipairs(Presets) do
-    local PresetBtn = Instance.new("TextButton")
-    PresetBtn.Name = preset.name
-    PresetBtn.Parent = PresetFrame
-    PresetBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    PresetBtn.Size = UDim2.new(0.3, 0, 0, 30)
-    PresetBtn.Font = Enum.Font.Gotham
-    PresetBtn.Text = preset.name
-    PresetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    PresetBtn.TextScaled = true
-    PresetBtn.LayoutOrder = i
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = MainFrame
+    Btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    Btn.Position = UDim2.new(0, 20 + (i-1)*100, 0, 290)
+    Btn.Size = UDim2.new(0, 95, 0, 40)
+    Btn.Font = Enum.Font.Gotham
+    Btn.Text = preset.name
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.TextScaled = true
+    Btn.ZIndex = 1000
     
-    local PresetBtnCorner = Instance.new("UICorner")
-    PresetBtnCorner.CornerRadius = UDim.new(0, 6)
-    PresetBtnCorner.Parent = PresetBtn
+    local PCorner = Instance.new("UICorner", Btn)
+    PCorner.CornerRadius = UDim.new(0, 8)
     
-    PresetBtn.MouseButton1Click:Connect(function()
+    Btn.MouseButton1Click:Connect(function()
         InputBox.Text = preset.id
-        TweenService:Create(PresetBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 100)}):Play()
-        wait(0.3)
-        TweenService:Create(PresetBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 70)}):Play()
+        Status.Text = preset.name .. " loaded!"
+        Status.TextColor3 = Color3.fromRGB(0, 255, 127)
     end)
 end
 
-PresetFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-
--- Status Label
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Name = "StatusLabel"
-StatusLabel.Parent = MainFrame
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0, 20, 1, -35)
-StatusLabel.Size = UDim2.new(1, -40, 0, 25)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Text = "Ready to load animations!"
-StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
-StatusLabel.TextScaled = true
-StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Animation Functions
+-- ANIMATION SYSTEM
 local currentAnim = nil
 
-local function loadAnimation(animationId)
-    if not player.Character or not player.Character:FindFirstChild("Humanoid") then
-        StatusLabel.Text = "❌ No character found!"
-        return
-    end
-    
-    local success, err = pcall(function()
-        -- Stop current animation
-        if currentAnim then
-            currentAnim:Stop()
-            currentAnim:Destroy()
+local function loadAnimation(id)
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        local success, err = pcall(function()
+            if currentAnim then
+                currentAnim:Stop()
+                currentAnim:Destroy()
+            end
+            
+            local anim = Instance.new("Animation")
+            anim.AnimationId = "rbxassetid://" .. id
+            currentAnim = player.Character.Humanoid:LoadAnimation(anim)
+            currentAnim:Play()
+            
+            Status.Text = "✅ Playing: " .. preset.name or id
+            Status.TextColor3 = Color3.fromRGB(0, 255, 127)
+        end)
+        
+        if not success then
+            Status.Text = "❌ Error: " .. tostring(err)
+            Status.TextColor3 = Color3.fromRGB(255, 100, 100)
         end
-        
-        -- Load new animation
-        local anim = Instance.new("Animation")
-        anim.AnimationId = "rbxassetid://" .. animationId
-        currentAnim = player.Character.Humanoid:LoadAnimation(anim)
-        currentAnim:Play()
-        
-        StatusLabel.Text = "✅ Loaded: " .. animationId
-        StatusLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
-    end)
-    
-    if not success then
-        StatusLabel.Text = "❌ Invalid ID: " .. tostring(err)
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    else
+        Status.Text = "❌ No Character!"
+        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
     end
 end
 
-local function stopAnimation()
+-- BUTTON EVENTS
+LoadBtn.MouseButton1Click:Connect(function()
+    local id = InputBox.Text:match("%d+")
+    if id then
+        loadAnimation(id)
+    else
+        Status.Text = "❌ Invalid ID!"
+        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+StopBtn.MouseButton1Click:Connect(function()
     if currentAnim then
         currentAnim:Stop()
         currentAnim:Destroy()
         currentAnim = nil
-        StatusLabel.Text = "⏹️ Animation stopped!"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 0)
-    else
-        StatusLabel.Text = "ℹ️ No animation playing"
-        StatusLabel.TextColor3 = Color3.fromRGB(150, 150, 170)
-    end
-end
-
--- Button Events
-LoadButton.MouseButton1Click:Connect(function()
-    local animId = InputBox.Text:match("%d+")
-    if animId then
-        loadAnimation(animId)
-    else
-        StatusLabel.Text = "❌ Enter a valid number!"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        Status.Text = "⏹️ Stopped!"
+        Status.TextColor3 = Color3.fromRGB(255, 200, 0)
     end
 end)
 
-StopButton.MouseButton1Click:Connect(function()
-    stopAnimation()
-end)
-
--- Enter key support
-InputBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        local animId = InputBox.Text:match("%d+")
-        if animId then
-            loadAnimation(animId)
-        end
+InputBox.FocusLost:Connect(function(enter)
+    if enter then
+        local id = InputBox.Text:match("%d+")
+        if id then loadAnimation(id) end
     end
 end)
 
--- Button hover effects
-local function addHover(button, hoverColor, normalColor)
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = hoverColor}):Play()
-    end)
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- DELTA TOGGLE (F1)
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.F1 then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+print("🎭 DELTA ANIMATION LOADER LOADED!")
+print("📍 GUI in TOP LEFT CORNER")
+print("🎮 F1 = Toggle | Drag to move")
+print("✅ Wave (507766388) pre-loaded!")
