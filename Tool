@@ -1,16 +1,21 @@
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 
--- 1. CREATE THE TOOL
+-- 1. CLEANUP OLD UI
+local oldGui = player.PlayerGui:FindFirstChild("MovableDanceGui")
+if oldGui then oldGui:Destroy() end
+
+-- 2. CREATE THE TOOL
 local danceTool = Instance.new("Tool")
-danceTool.Name = "💃 Dance Hub"
+danceTool.Name = "💃 Movable Dance"
 danceTool.RequiresHandle = false
 danceTool.Parent = backpack
 
--- 2. GUI SETUP (Hidden by default)
+-- 3. GUI SETUP
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "DanceToolGui"
+ScreenGui.Name = "MovableDanceGui"
 ScreenGui.Enabled = false
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
@@ -18,19 +23,49 @@ ScreenGui.Parent = player:WaitForChild("PlayerGui")
 local Main = Instance.new("Frame", ScreenGui)
 Main.Size = UDim2.new(0, 300, 0, 350)
 Main.Position = UDim2.new(0.5, -150, 0.5, -175)
-Main.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
+Main.Active = true -- Required for dragging
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
 
+-- DRAGGING LOGIC (Custom implementation for smoothness)
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+Main.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+Main.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then update(input) end
+end)
+
+-- 4. UI CONTENT
 local Title = Instance.new("TextLabel", Main)
 Title.Size = UDim2.new(1, 0, 0, 50)
-Title.Text = "DANCE MENU"
-Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Text = "DRAG ME • DANCE MENU"
+Title.TextColor3 = Color3.fromRGB(0, 255, 160)
 Title.Font = Enum.Font.GothamBold
 Title.BackgroundTransparency = 1
-Title.TextSize = 18
+Title.TextSize = 16
 
--- 3. ANIMATION LOGIC
+-- ANIMATION ENGINE
 local currentTrack = nil
 local function playAnim(id)
     local char = player.Character
@@ -41,26 +76,33 @@ local function playAnim(id)
         if currentTrack then currentTrack:Stop() end
         local anim = Instance.new("Animation")
         anim.AnimationId = "rbxassetid://" .. id
-        currentTrack = animator:LoadAnimation(anim)
-        currentTrack.Looped = true
-        currentTrack:Play()
+        
+        local success, track = pcall(function() return animator:LoadAnimation(anim) end)
+        if success then
+            currentTrack = track
+            currentTrack.Looped = true
+            currentTrack:Play()
+        else
+            warn("Failed to load animation. Check if ID matches Rig Type (R6/R15)")
+        end
     end
 end
 
--- 4. CREATE BUTTONS
+-- BUTTONS (Mixed IDs - Adjust as needed)
 local emotes = {
-    {"Hype", 3695333486},
-    {"Robot", 3333499508},
-    {"Old School", 3333331385},
-    {"Stop Dance", 0}
+    {"Hype (R15)", 3695333486},
+    {"Old School (R15)", 3333331385},
+    {"Dance (R6)", 130018893},
+    {"Wave (R6)", 128777973},
+    {"STOP", 0}
 }
 
 for i, data in ipairs(emotes) do
     local btn = Instance.new("TextButton", Main)
     btn.Size = UDim2.new(0.8, 0, 0, 40)
-    btn.Position = UDim2.new(0.1, 0, 0, 60 + (i-1) * 50)
+    btn.Position = UDim2.new(0.1, 0, 0, 70 + (i-1) * 50)
     btn.Text = data[1]
-    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.Gotham
     Instance.new("UICorner", btn)
@@ -74,14 +116,8 @@ for i, data in ipairs(emotes) do
     end)
 end
 
--- 5. TOOL EVENTS (Equip/Unequip)
-danceTool.Equipped:Connect(function()
-    ScreenGui.Enabled = true
-end)
+-- 5. TOOL LOGIC
+danceTool.Equipped:Connect(function() ScreenGui.Enabled = true end)
+danceTool.Unequipped:Connect(function() ScreenGui.Enabled = false end)
 
-danceTool.Unequipped:Connect(function()
-    ScreenGui.Enabled = false
-    if currentTrack then currentTrack:Stop() end
-end)
-
-print("Dance Tool Loaded in Backpack!")
+print("Movable Dance Tool Loaded!")
