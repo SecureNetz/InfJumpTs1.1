@@ -1,11 +1,11 @@
--- DELTA EXECUTOR FE Animation Loader (100% Working)
+-- DELTA EXECUTOR FE Animation Loader 
+
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
--- DELTA FIX: Use PlayerGui with high priority
+-- GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AnimationLoaderDelta"
 ScreenGui.DisplayOrder = 2147483647
@@ -13,114 +13,96 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- DELTA MAIN FRAME (GUARANTEED VISIBLE)
+-- MAIN FRAME
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "Main"
 MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,40)
 MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.02, 0, 0.02, 0) -- TOP LEFT CORNER (DELTA SAFE)
-MainFrame.Size = UDim2.new(0, 420, 0, 380)
+MainFrame.Position = UDim2.new(0.02,0,0.02,0)
+MainFrame.Size = UDim2.new(0,420,0,380)
 MainFrame.Active = true
 MainFrame.Draggable = true
+MainFrame.Visible = true
 MainFrame.ZIndex = 999
 
--- Corners + Stroke
-local Corner = Instance.new("UICorner", MainFrame)
-Corner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0,12)
 
 local Stroke = Instance.new("UIStroke", MainFrame)
-Stroke.Color = Color3.fromRGB(0, 255, 127)
+Stroke.Color = Color3.fromRGB(0,255,127)
 Stroke.Thickness = 3
 
--- TITLE (BIG + BRIGHT)
-local Title = Instance.new("TextLabel")
-Title.Parent = MainFrame
+-- TITLE
+local Title = Instance.new("TextLabel", MainFrame)
 Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 20, 0, 15)
-Title.Size = UDim2.new(1, -80, 0, 50)
+Title.Position = UDim2.new(0,20,0,15)
+Title.Size = UDim2.new(1,-80,0,50)
 Title.Font = Enum.Font.GothamBold
-Title.Text = "🎭 DELTA ANIMATION LOADER"
-Title.TextColor3 = Color3.fromRGB(0, 255, 127)
+Title.Text = "🎭 ANIMATION LOADER"
+Title.TextColor3 = Color3.fromRGB(0,255,127)
 Title.TextScaled = true
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.ZIndex = 1000
 
 -- CLOSE BUTTON
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Parent = MainFrame
-CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-CloseBtn.Position = UDim2.new(1, -50, 0, 15)
-CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(255,80,80)
+CloseBtn.Position = UDim2.new(1,-50,0,15)
+CloseBtn.Size = UDim2.new(0,35,0,35)
 CloseBtn.Text = "X"
 CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextColor3 = Color3.new(1,1,1)
 CloseBtn.TextScaled = true
 CloseBtn.ZIndex = 1001
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0,8)
 
-local CloseCorner = Instance.new("UICorner", CloseBtn)
-CloseCorner.CornerRadius = UDim.new(0, 8)
-
--- INPUT BOX (LARGE)
-local InputBox = Instance.new("TextBox")
-InputBox.Parent = MainFrame
-InputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-InputBox.Position = UDim2.new(0, 20, 0, 80)
-InputBox.Size = UDim2.new(1, -40, 0, 50)
+-- INPUT
+local InputBox = Instance.new("TextBox", MainFrame)
+InputBox.BackgroundColor3 = Color3.fromRGB(45,45,55)
+InputBox.Position = UDim2.new(0,20,0,80)
+InputBox.Size = UDim2.new(1,-40,0,50)
 InputBox.Font = Enum.Font.Gotham
-InputBox.PlaceholderText = "Enter ID: 507766388 (Wave)"
+InputBox.PlaceholderText = "Enter Animation ID"
 InputBox.Text = "507766388"
-InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.TextColor3 = Color3.new(1,1,1)
 InputBox.TextScaled = true
 InputBox.ZIndex = 1000
+Instance.new("UICorner", InputBox).CornerRadius = UDim.new(0,10)
 
-local InputCorner = Instance.new("UICorner", InputBox)
-InputCorner.CornerRadius = UDim.new(0, 10)
-
--- LOAD BUTTON (HUGE)
-local LoadBtn = Instance.new("TextButton")
-LoadBtn.Parent = MainFrame
-LoadBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 127)
-LoadBtn.Position = UDim2.new(0, 20, 0, 150)
-LoadBtn.Size = UDim2.new(0.47, -25, 0, 60)
+-- LOAD BUTTON
+local LoadBtn = Instance.new("TextButton", MainFrame)
+LoadBtn.BackgroundColor3 = Color3.fromRGB(0,255,127)
+LoadBtn.Position = UDim2.new(0,20,0,150)
+LoadBtn.Size = UDim2.new(0.47,-25,0,60)
 LoadBtn.Font = Enum.Font.GothamBold
-LoadBtn.Text = "🎬 LOAD ANIMATION"
-LoadBtn.TextColor3 = Color3.fromRGB(30, 30, 40)
+LoadBtn.Text = "🎬 LOAD"
+LoadBtn.TextColor3 = Color3.fromRGB(30,30,40)
 LoadBtn.TextScaled = true
 LoadBtn.ZIndex = 1000
-
-local LoadCorner = Instance.new("UICorner", LoadBtn)
-LoadCorner.CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", LoadBtn).CornerRadius = UDim.new(0,10)
 
 -- STOP BUTTON
-local StopBtn = Instance.new("TextButton")
-StopBtn.Parent = MainFrame
-StopBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-StopBtn.Position = UDim2.new(0.52, -20, 0, 150)
-StopBtn.Size = UDim2.new(0.47, -25, 0, 60)
+local StopBtn = Instance.new("TextButton", MainFrame)
+StopBtn.BackgroundColor3 = Color3.fromRGB(255,100,100)
+StopBtn.Position = UDim2.new(0.52,-20,0,150)
+StopBtn.Size = UDim2.new(0.47,-25,0,60)
 StopBtn.Font = Enum.Font.GothamBold
-StopBtn.Text = "⏹️ STOP"
-StopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+StopBtn.Text = "⏹ STOP"
+StopBtn.TextColor3 = Color3.new(1,1,1)
 StopBtn.TextScaled = true
 StopBtn.ZIndex = 1000
-
-local StopCorner = Instance.new("UICorner", StopBtn)
-StopCorner.CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", StopBtn).CornerRadius = UDim.new(0,10)
 
 -- STATUS
-local Status = Instance.new("TextLabel")
-Status.Parent = MainFrame
-Status.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-Status.Position = UDim2.new(0, 20, 0, 230)
-Status.Size = UDim2.new(1, -40, 0, 40)
+local Status = Instance.new("TextLabel", MainFrame)
+Status.BackgroundColor3 = Color3.fromRGB(45,45,55)
+Status.Position = UDim2.new(0,20,0,230)
+Status.Size = UDim2.new(1,-40,0,40)
 Status.Font = Enum.Font.GothamBold
-Status.Text = "✅ DELTA READY! GUI LOADED!"
-Status.TextColor3 = Color3.fromRGB(0, 255, 127)
+Status.Text = "✅ READY"
+Status.TextColor3 = Color3.fromRGB(0,255,127)
 Status.TextScaled = true
 Status.ZIndex = 1000
-
-local StatusCorner = Instance.new("UICorner", Status)
-StatusCorner.CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", Status).CornerRadius = UDim.new(0,10)
 
 -- PRESETS
 local Presets = {
@@ -130,66 +112,64 @@ local Presets = {
     {name="Crab", id="522635821"}
 }
 
-for i, preset in ipairs(Presets) do
-    local Btn = Instance.new("TextButton")
-    Btn.Parent = MainFrame
-    Btn.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
-    Btn.Position = UDim2.new(0, 20 + (i-1)*100, 0, 290)
-    Btn.Size = UDim2.new(0, 95, 0, 40)
+for i,preset in ipairs(Presets) do
+    local Btn = Instance.new("TextButton", MainFrame)
+    Btn.BackgroundColor3 = Color3.fromRGB(60,60,70)
+    Btn.Position = UDim2.new(0,20+(i-1)*100,0,290)
+    Btn.Size = UDim2.new(0,95,0,40)
     Btn.Font = Enum.Font.Gotham
     Btn.Text = preset.name
-    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.TextColor3 = Color3.new(1,1,1)
     Btn.TextScaled = true
     Btn.ZIndex = 1000
-    
-    local PCorner = Instance.new("UICorner", Btn)
-    PCorner.CornerRadius = UDim.new(0, 8)
-    
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0,8)
+
     Btn.MouseButton1Click:Connect(function()
         InputBox.Text = preset.id
-        Status.Text = preset.name .. " loaded!"
-        Status.TextColor3 = Color3.fromRGB(0, 255, 127)
+        Status.Text = "✅ Selected: "..preset.name
+        Status.TextColor3 = Color3.fromRGB(0,255,127)
     end)
 end
 
--- ANIMATION SYSTEM
-local currentAnim = nil
+-- ANIMATION SYSTEM (FIXED)
+local currentAnim
 
 local function loadAnimation(id)
-    if player.Character and player.Character:FindFirstChild("Humanoid") then
-        local success, err = pcall(function()
-            if currentAnim then
-                currentAnim:Stop()
-                currentAnim:Destroy()
-            end
-            
-            local anim = Instance.new("Animation")
-            anim.AnimationId = "rbxassetid://" .. id
-            currentAnim = player.Character.Humanoid:LoadAnimation(anim)
-            currentAnim:Play()
-            
-            Status.Text = "✅ Playing: " .. preset.name or id
-            Status.TextColor3 = Color3.fromRGB(0, 255, 127)
-        end)
-        
-        if not success then
-            Status.Text = "❌ Error: " .. tostring(err)
-            Status.TextColor3 = Color3.fromRGB(255, 100, 100)
-        end
-    else
-        Status.Text = "❌ No Character!"
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+    local char = player.Character
+    if not char then return end
+
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local animator = humanoid:FindFirstChildOfClass("Animator")
+    if not animator then
+        animator = Instance.new("Animator")
+        animator.Parent = humanoid
     end
+
+    if currentAnim then
+        currentAnim:Stop()
+        currentAnim:Destroy()
+    end
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://"..id
+
+    currentAnim = animator:LoadAnimation(anim)
+    currentAnim:Play()
+
+    Status.Text = "▶ Playing ID: "..id
+    Status.TextColor3 = Color3.fromRGB(0,255,127)
 end
 
--- BUTTON EVENTS
+-- EVENTS
 LoadBtn.MouseButton1Click:Connect(function()
     local id = InputBox.Text:match("%d+")
     if id then
         loadAnimation(id)
     else
-        Status.Text = "❌ Invalid ID!"
-        Status.TextColor3 = Color3.fromRGB(255, 100, 100)
+        Status.Text = "❌ Invalid ID"
+        Status.TextColor3 = Color3.fromRGB(255,100,100)
     end
 end)
 
@@ -198,30 +178,27 @@ StopBtn.MouseButton1Click:Connect(function()
         currentAnim:Stop()
         currentAnim:Destroy()
         currentAnim = nil
-        Status.Text = "⏹️ Stopped!"
-        Status.TextColor3 = Color3.fromRGB(255, 200, 0)
-    end
-end)
-
-InputBox.FocusLost:Connect(function(enter)
-    if enter then
-        local id = InputBox.Text:match("%d+")
-        if id then loadAnimation(id) end
+        Status.Text = "⏹ Stopped"
+        Status.TextColor3 = Color3.fromRGB(255,200,0)
     end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
+    if currentAnim then
+        currentAnim:Stop()
+        currentAnim:Destroy()
+    end
     ScreenGui:Destroy()
 end)
 
--- DELTA TOGGLE (F1)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.F1 then
         MainFrame.Visible = not MainFrame.Visible
     end
 end)
 
-print("🎭 DELTA ANIMATION LOADER LOADED!")
-print("📍 GUI in TOP LEFT CORNER")
-print("🎮 F1 = Toggle | Drag to move")
-print("✅ Wave (507766388) pre-loaded!")
+player.CharacterAdded:Connect(function()
+    currentAnim = nil
+end)
+
+print("🎭 DELTA ANIMATION LOADER LOADED")
