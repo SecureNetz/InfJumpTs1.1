@@ -1,203 +1,190 @@
--- DELTA ANIMATION HUB (ADVANCED)
--- Loader + Speed Control + Emote Menu
-
+-- DELTA ANIMATION HUB (STABLE VERSION)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-
 local player = Players.LocalPlayer
+
+-- CLEANUP PREVIOUS SESSIONS
+local existing = player.PlayerGui:FindFirstChild("DeltaAnimationHub")
+if existing then existing:Destroy() end
 
 -- GUI SETUP
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "DeltaAnimationHub"
-ScreenGui.DisplayOrder = 2147483647
 ScreenGui.ResetOnSpawn = false
-ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
 local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0,460,0,420)
-Main.Position = UDim2.new(0.02,0,0.05,0)
-Main.BackgroundColor3 = Color3.fromRGB(28,28,38)
+Main.Size = UDim2.new(0, 460, 0, 420)
+Main.Position = UDim2.new(0.5, -230, 0.5, -210) -- Centered
+Main.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,14)
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 14)
 local Stroke = Instance.new("UIStroke", Main)
-Stroke.Color = Color3.fromRGB(0,255,160)
+Stroke.Color = Color3.fromRGB(0, 255, 160)
 Stroke.Thickness = 3
 
 -- TITLE
 local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1,-60,0,50)
-Title.Position = UDim2.new(0,20,0,10)
+Title.Size = UDim2.new(1, -60, 0, 50)
+Title.Position = UDim2.new(0, 20, 0, 10)
 Title.BackgroundTransparency = 1
 Title.Text = "🎭 DELTA ANIMATION HUB"
 Title.Font = Enum.Font.GothamBold
-Title.TextScaled = true
+Title.TextColor3 = Color3.fromRGB(0, 255, 160)
+Title.TextSize = 20
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.TextColor3 = Color3.fromRGB(0,255,160)
 
--- CLOSE
+-- CLOSE BUTTON
 local Close = Instance.new("TextButton", Main)
-Close.Size = UDim2.new(0,36,0,36)
-Close.Position = UDim2.new(1,-46,0,14)
+Close.Size = UDim2.new(0, 36, 0, 36)
+Close.Position = UDim2.new(1, -46, 0, 14)
 Close.Text = "X"
 Close.Font = Enum.Font.GothamBold
-Close.TextScaled = true
-Close.BackgroundColor3 = Color3.fromRGB(255,80,80)
-Close.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Close).CornerRadius = UDim.new(0,8)
+Close.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+Close.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", Close).CornerRadius = UDim.new(0, 8)
 
--- INPUT
+-- ID INPUT
 local Input = Instance.new("TextBox", Main)
-Input.Size = UDim2.new(1,-40,0,44)
-Input.Position = UDim2.new(0,20,0,70)
-Input.PlaceholderText = "Animation ID"
+Input.Size = UDim2.new(1, -40, 0, 44)
+Input.Position = UDim2.new(0, 20, 0, 70)
+Input.PlaceholderText = "Enter Animation ID..."
 Input.Text = "507766388"
 Input.Font = Enum.Font.Gotham
-Input.TextScaled = true
-Input.BackgroundColor3 = Color3.fromRGB(45,45,55)
-Input.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Input).CornerRadius = UDim.new(0,10)
+Input.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+Input.TextColor3 = Color3.new(1, 1, 1)
+Input.TextSize = 18
+Instance.new("UICorner", Input).CornerRadius = UDim.new(0, 10)
 
--- BUTTONS
+-- BUTTONS: LOAD & STOP
 local Load = Instance.new("TextButton", Main)
-Load.Size = UDim2.new(0.48,-15,0,52)
-Load.Position = UDim2.new(0,20,0,130)
-Load.Text = "▶ LOAD"
+Load.Size = UDim2.new(0.48, -15, 0, 52)
+Load.Position = UDim2.new(0, 20, 0, 130)
+Load.Text = "▶ PLAY"
 Load.Font = Enum.Font.GothamBold
-Load.TextScaled = true
-Load.BackgroundColor3 = Color3.fromRGB(0,255,160)
-Load.TextColor3 = Color3.fromRGB(30,30,40)
-Instance.new("UICorner", Load).CornerRadius = UDim.new(0,10)
+Load.BackgroundColor3 = Color3.fromRGB(0, 255, 160)
+Load.TextColor3 = Color3.fromRGB(30, 30, 40)
+Instance.new("UICorner", Load).CornerRadius = UDim.new(0, 10)
 
 local Stop = Instance.new("TextButton", Main)
-Stop.Size = UDim2.new(0.48,-15,0,52)
-Stop.Position = UDim2.new(0.52,0,0,130)
+Stop.Size = UDim2.new(0.48, -15, 0, 52)
+Stop.Position = UDim2.new(0.52, 0, 0, 130)
 Stop.Text = "⏹ STOP"
 Stop.Font = Enum.Font.GothamBold
-Stop.TextScaled = true
-Stop.BackgroundColor3 = Color3.fromRGB(255,100,100)
-Stop.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Stop).CornerRadius = UDim.new(0,10)
+Stop.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+Stop.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", Stop).CornerRadius = UDim.new(0, 10)
 
--- SPEED SLIDER
-local SpeedLabel = Instance.new("TextLabel", Main)
-SpeedLabel.Size = UDim2.new(1,-40,0,26)
-SpeedLabel.Position = UDim2.new(0,20,0,195)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.Text = "Speed: 1.0"
-SpeedLabel.Font = Enum.Font.GothamBold
-SpeedLabel.TextScaled = true
-SpeedLabel.TextColor3 = Color3.fromRGB(200,255,220)
-
+-- SPEED CONTROL
 local Speed = Instance.new("TextBox", Main)
-Speed.Size = UDim2.new(1,-40,0,36)
-Speed.Position = UDim2.new(0,20,0,225)
+Speed.Size = UDim2.new(1, -40, 0, 36)
+Speed.Position = UDim2.new(0, 20, 0, 210)
+Speed.PlaceholderText = "Speed (Default: 1)"
 Speed.Text = "1"
 Speed.Font = Enum.Font.Gotham
-Speed.TextScaled = true
-Speed.BackgroundColor3 = Color3.fromRGB(50,50,60)
-Speed.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", Speed).CornerRadius = UDim.new(0,8)
+Speed.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+Speed.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", Speed).CornerRadius = UDim.new(0, 8)
 
--- STATUS
+-- STATUS DISPLAY
 local Status = Instance.new("TextLabel", Main)
-Status.Size = UDim2.new(1,-40,0,36)
-Status.Position = UDim2.new(0,20,0,270)
-Status.BackgroundColor3 = Color3.fromRGB(45,45,55)
+Status.Size = UDim2.new(1, -40, 0, 36)
+Status.Position = UDim2.new(0, 20, 0, 260)
+Status.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
 Status.Text = "✅ Ready"
 Status.Font = Enum.Font.GothamBold
-Status.TextScaled = true
-Status.TextColor3 = Color3.fromRGB(0,255,160)
-Instance.new("UICorner", Status).CornerRadius = UDim.new(0,8)
+Status.TextColor3 = Color3.fromRGB(0, 255, 160)
+Instance.new("UICorner", Status).CornerRadius = UDim.new(0, 8)
 
--- EMOTE MENU
+-- EMOTE PRESETS
 local Emotes = {
-    {"Wave",507766388},
-    {"Floss",505757002},
-    {"Dance",522635514},
-    {"Crab",522635821},
+    {"Wave", 507766388},
+    {"Floss", 505757002},
+    {"Dance", 522635514},
+    {"Crab", 522635821}
 }
 
-for i,e in ipairs(Emotes) do
+for i, e in ipairs(Emotes) do
     local B = Instance.new("TextButton", Main)
-    B.Size = UDim2.new(0,100,0,36)
-    B.Position = UDim2.new(0,20+(i-1)*110,0,320)
+    B.Size = UDim2.new(0, 100, 0, 36)
+    B.Position = UDim2.new(0, 20 + (i-1) * 110, 0, 320)
     B.Text = e[1]
     B.Font = Enum.Font.Gotham
-    B.TextScaled = true
-    B.BackgroundColor3 = Color3.fromRGB(60,60,70)
-    B.TextColor3 = Color3.new(1,1,1)
-    Instance.new("UICorner", B).CornerRadius = UDim.new(0,8)
+    B.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    B.TextColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", B).CornerRadius = UDim.new(0, 8)
 
     B.MouseButton1Click:Connect(function()
         Input.Text = tostring(e[2])
+        Status.Text = "Selected: " .. e[1]
     end)
 end
 
--- ANIMATION CORE
-local current
+-- ANIMATION ENGINE
+local currentTrack = nil
 
-local function getAnimator()
-    local c = player.Character
-    if not c then return end
-    local h = c:FindFirstChildOfClass("Humanoid")
-    if not h then return end
-    local a = h:FindFirstChildOfClass("Animator") or Instance.new("Animator", h)
-    return a
-end
+local function playAnim(id)
+    local char = player.Character
+    if not char then Status.Text = "❌ No Character"; return end
+    
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local animator = hum and hum:FindFirstChildOfClass("Animator")
+    if not animator then Status.Text = "❌ No Animator"; return end
 
-local function play(id)
-    local animator = getAnimator()
-    if not animator then return end
-
-    if current then
-        current:Stop()
-        current:Destroy()
-    end
+    -- Stop previous
+    if currentTrack then currentTrack:Stop() currentTrack:Destroy() end
 
     local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://"..id
+    anim.AnimationId = "rbxassetid://" .. tostring(id)
 
-    current = animator:LoadAnimation(anim)
-    current:Play()
-    current:AdjustSpeed(tonumber(Speed.Text) or 1)
+    local success, track = pcall(function()
+        return animator:LoadAnimation(anim)
+    end)
 
-    Status.Text = "▶ Playing "..id
+    if success then
+        currentTrack = track
+        currentTrack.Looped = true
+        currentTrack:Play()
+        currentTrack:AdjustSpeed(tonumber(Speed.Text) or 1)
+        Status.Text = "▶ Playing: " .. id
+    else
+        Status.Text = "❌ Error Loading ID"
+    end
 end
 
+-- LOGIC CONNECTIONS
 Load.MouseButton1Click:Connect(function()
-    local id = Input.Text:match("%d+")
-    if id then play(id) end
+    local cleanID = Input.Text:match("%d+")
+    if cleanID then playAnim(cleanID) else Status.Text = "❌ Invalid ID" end
 end)
 
 Stop.MouseButton1Click:Connect(function()
-    if current then
-        current:Stop()
-        current:Destroy()
-        current = nil
+    if currentTrack then
+        currentTrack:Stop()
+        currentTrack:Destroy()
+        currentTrack = nil
         Status.Text = "⏹ Stopped"
     end
 end)
 
-Speed.FocusLost:Connect(function()
-    if current then
-        current:AdjustSpeed(tonumber(Speed.Text) or 1)
-        SpeedLabel.Text = "Speed: "..Speed.Text
+Speed:GetPropertyChangedSignal("Text"):Connect(function()
+    if currentTrack then
+        currentTrack:AdjustSpeed(tonumber(Speed.Text) or 1)
     end
 end)
 
 Close.MouseButton1Click:Connect(function()
-    if current then current:Stop() end
+    if currentTrack then currentTrack:Stop() end
     ScreenGui:Destroy()
 end)
 
-UserInputService.InputBegan:Connect(function(i)
-    if i.KeyCode == Enum.KeyCode.F1 then
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.F1 then
         Main.Visible = not Main.Visible
     end
 end)
 
-print("DELTA ANIMATION HUB LOADED")
+print("DELTA HUB: Press F1 to Toggle")
