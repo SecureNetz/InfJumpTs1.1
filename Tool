@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local backpack = player:WaitForChild("Backpack")
+
+-- 1. CREATE THE TOOL
+local danceTool = Instance.new("Tool")
+danceTool.Name = "💃 Dance Hub"
+danceTool.RequiresHandle = false
+danceTool.Parent = backpack
+
+-- 2. GUI SETUP (Hidden by default)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "DanceToolGui"
+ScreenGui.Enabled = false
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
+
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 300, 0, 350)
+Main.Position = UDim2.new(0.5, -150, 0.5, -175)
+Main.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 15)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Text = "DANCE MENU"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.BackgroundTransparency = 1
+Title.TextSize = 18
+
+-- 3. ANIMATION LOGIC
+local currentTrack = nil
+local function playAnim(id)
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local animator = hum and hum:FindFirstChildOfClass("Animator")
+    
+    if animator then
+        if currentTrack then currentTrack:Stop() end
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://" .. id
+        currentTrack = animator:LoadAnimation(anim)
+        currentTrack.Looped = true
+        currentTrack:Play()
+    end
+end
+
+-- 4. CREATE BUTTONS
+local emotes = {
+    {"Hype", 3695333486},
+    {"Robot", 3333499508},
+    {"Old School", 3333331385},
+    {"Stop Dance", 0}
+}
+
+for i, data in ipairs(emotes) do
+    local btn = Instance.new("TextButton", Main)
+    btn.Size = UDim2.new(0.8, 0, 0, 40)
+    btn.Position = UDim2.new(0.1, 0, 0, 60 + (i-1) * 50)
+    btn.Text = data[1]
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.Gotham
+    Instance.new("UICorner", btn)
+
+    btn.MouseButton1Click:Connect(function()
+        if data[2] == 0 then
+            if currentTrack then currentTrack:Stop() end
+        else
+            playAnim(data[2])
+        end
+    end)
+end
+
+-- 5. TOOL EVENTS (Equip/Unequip)
+danceTool.Equipped:Connect(function()
+    ScreenGui.Enabled = true
+end)
+
+danceTool.Unequipped:Connect(function()
+    ScreenGui.Enabled = false
+    if currentTrack then currentTrack:Stop() end
+end)
+
+print("Dance Tool Loaded in Backpack!")
