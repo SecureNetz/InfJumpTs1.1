@@ -1,0 +1,37 @@
+-- FE Infinite Jump Script
+-- Works on most executors (Synapse, Krnl, Fluxus, etc.)
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local jumping = false
+
+-- Method 1: UserInputService (Recommended - Most Reliable)
+UserInputService.JumpRequest:Connect(function()
+    if player.Character and player.Character:FindFirstChild("Humanoid") then
+        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+-- Method 2: Backup with Spacebar detection (Extra Reliability)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    
+    if input.KeyCode == Enum.KeyCode.Space then
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Method 3: Heartbeat loop for maximum compatibility (Anti-Anti-Cheat)
+RunService.Heartbeat:Connect(function()
+    if player.Character and player.Character:FindFirstChild("Humanoid") and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+print("FE Infinite Jump Loaded! Press SPACE to fly infinitely!")
+print("Script by Roblox Exploit Helper - Fully Filtered & Server-Side!")
